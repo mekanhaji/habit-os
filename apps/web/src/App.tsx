@@ -2,6 +2,7 @@ import {
   BrowserRouter,
   Navigate,
   NavLink,
+  Outlet,
   Route,
   Routes,
 } from "react-router-dom"
@@ -54,24 +55,24 @@ function InitialRouteRedirect() {
   return <Navigate to="/app" replace />
 }
 
-function ProtectedAppRoute() {
+function ProtectedRoute() {
   const profile = useUserProfileStore((state) => state.profile)
 
   if (!profile) {
     return <Navigate to="/profile" replace />
   }
 
-  return <DashboardPage />
+  return <Outlet />
 }
 
-function ProfileRoute() {
+function GuestRoute() {
   const profile = useUserProfileStore((state) => state.profile)
 
   if (profile) {
     return <Navigate to="/app" replace />
   }
 
-  return <ProfilePage />
+  return <Outlet />
 }
 
 export function App() {
@@ -111,9 +112,15 @@ export function App() {
           <Routes>
             <Route path="/" element={<InitialRouteRedirect />} />
             <Route path="/welcome" element={<LandingPage />} />
-            <Route path="/app" element={<ProtectedAppRoute />} />
-            <Route path="/profile" element={<ProfileRoute />} />
-            <Route path="/settings" element={<SettingsPage />} />
+            
+            <Route element={<GuestRoute />}>
+              <Route path="/profile" element={<ProfilePage />} />
+            </Route>
+
+            <Route element={<ProtectedRoute />}>
+              <Route path="/app" element={<DashboardPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </Route>
           </Routes>
         </div>
       </div>

@@ -29,6 +29,7 @@ export function SettingsPage() {
   }
 
   function handleResetProfile() {
+    localStorage.removeItem("userProfile")
     userProfileStore.clearProfile()
     navigate("/profile", { replace: true })
   }
@@ -76,7 +77,7 @@ export function SettingsPage() {
               className="w-fit"
               onClick={handleResetProfile}
             >
-              Reset profile
+              Reset Profile
             </Button>
           </div>
 
