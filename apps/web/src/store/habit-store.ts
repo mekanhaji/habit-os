@@ -9,6 +9,10 @@ export interface Habit {
   category: Category
   streak: number
   lastCompleted: string | null
+  lastProgressDate: string | null
+  targetCount: number
+  completedCount: number
+  unit: string
 }
 
 interface HabitState {

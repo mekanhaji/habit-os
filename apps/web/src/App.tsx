@@ -2,6 +2,15 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Select } from "@workspace/ui/components/select"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@workspace/ui/components/dialog"
 import { AiAssistant } from "./components/ai-assistant.tsx"
 import { HabitItem } from "./components/habit-item"
 import {
@@ -14,22 +23,62 @@ import {
 
 const HABIT_DATA_KEY = "habitData"
 
-function isHabit(value: unknown): value is Habit {
+const DEFAULT_TARGET_COUNT = 1
+const DEFAULT_COMPLETED_COUNT = 0
+const DEFAULT_UNIT = "times"
+
+function isValidCount(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+}
+
+function isValidTargetCount(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value) && value >= 1
+}
+
+function normalizeHabit(value: unknown): Habit | null {
   if (typeof value !== "object" || value === null) {
-    return false
+    return null
   }
 
   const item = value as Record<string, unknown>
 
-  return (
-    typeof item.id === "number" &&
-    Number.isFinite(item.id) &&
-    typeof item.name === "string" &&
-    (item.category === "health" || item.category === "productivity") &&
-    typeof item.streak === "number" &&
-    Number.isFinite(item.streak) &&
-    (typeof item.lastCompleted === "string" || item.lastCompleted === null)
-  )
+  if (
+    typeof item.id !== "number" ||
+    !Number.isFinite(item.id) ||
+    typeof item.name !== "string" ||
+    (item.category !== "health" && item.category !== "productivity") ||
+    typeof item.streak !== "number" ||
+    !Number.isFinite(item.streak) ||
+    (typeof item.lastCompleted !== "string" && item.lastCompleted !== null)
+  ) {
+    return null
+  }
+
+  const today = new Date().toISOString().slice(0, 10)
+  const targetCount = isValidTargetCount(item.targetCount)
+    ? item.targetCount
+    : DEFAULT_TARGET_COUNT
+  const rawCompletedCount = isValidCount(item.completedCount)
+    ? item.completedCount
+    : DEFAULT_COMPLETED_COUNT
+  const rawLastProgressDate =
+    typeof item.lastProgressDate === "string" ? item.lastProgressDate : null
+  const lastProgressDate =
+    rawLastProgressDate === today ? rawLastProgressDate : null
+  const completedCount = lastProgressDate === today ? rawCompletedCount : 0
+  const unit = typeof item.unit === "string" ? item.unit : DEFAULT_UNIT
+
+  return {
+    id: item.id,
+    name: item.name,
+    category: item.category,
+    streak: item.streak,
+    lastCompleted: item.lastCompleted,
+    lastProgressDate,
+    targetCount,
+    completedCount,
+    unit,
+  }
 }
 
 function isHabitFilter(value: string): value is HabitFilter {
@@ -42,8 +91,13 @@ export function App() {
   const points = useHabitStore((state) => state.points)
   const level = useHabitStore((state) => state.level)
   const hasHydratedRef = useRef(false)
+  const [isAddHabitOpen, setIsAddHabitOpen] = useState(false)
   const [habitName, setHabitName] = useState("")
   const [category, setCategory] = useState<Category>("health")
+  const [targetCountInput, setTargetCountInput] = useState(
+    String(DEFAULT_TARGET_COUNT)
+  )
+  const [unitInput, setUnitInput] = useState(DEFAULT_UNIT)
   const progressToNextLevel = points % 100
   const progressWidth = `${progressToNextLevel}%`
   const filteredHabits = habits.filter(
@@ -54,9 +108,16 @@ export function App() {
     event.preventDefault()
 
     const trimmedName = habitName.trim()
+    const parsedTargetCount = Number(targetCountInput)
+    const trimmedUnit = unitInput.trim()
 
-    if (!trimmedName) {
-      return
+    if (
+      !trimmedName ||
+      !Number.isFinite(parsedTargetCount) ||
+      parsedTargetCount < 1 ||
+      !trimmedUnit
+    ) {
+      return false
     }
 
     const newHabit: Habit = {
@@ -65,10 +126,25 @@ export function App() {
       category,
       streak: 0,
       lastCompleted: null,
+      lastProgressDate: null,
+      targetCount: parsedTargetCount,
+      completedCount: DEFAULT_COMPLETED_COUNT,
+      unit: trimmedUnit,
     }
 
     habitStore.setHabits([...habits, newHabit])
     setHabitName("")
+    setTargetCountInput(String(DEFAULT_TARGET_COUNT))
+    setUnitInput(DEFAULT_UNIT)
+    return true
+  }
+
+  function handleAddHabitSubmit(event: React.FormEvent<HTMLFormElement>) {
+    const didAddHabit = handleAddHabit(event)
+
+    if (didAddHabit) {
+      setIsAddHabitOpen(false)
+    }
   }
 
   function handleCompleteHabit(habitId: number) {
@@ -77,27 +153,51 @@ export function App() {
     habitStore.update((prevState) => {
       const targetHabit = prevState.habits.find((habit) => habit.id === habitId)
 
-      if (!targetHabit || targetHabit.lastCompleted === today) {
+      if (!targetHabit) {
         return prevState
       }
+
+      // If today's target is already completed, do not allow additional completions.
+      if (targetHabit.lastCompleted === today) {
+        return prevState
+      }
+
+      const completedCountForToday =
+        targetHabit.lastProgressDate === today
+          ? targetHabit.completedCount
+          : DEFAULT_COMPLETED_COUNT
+      const nextCompletedCount = completedCountForToday + 1
+      const reachedTarget = nextCompletedCount >= targetHabit.targetCount
+
+      const updatedPoints = reachedTarget
+        ? prevState.points + 10
+        : prevState.points
+      const updatedLevel =
+        reachedTarget && updatedPoints >= prevState.level * 100
+          ? prevState.level + 1
+          : prevState.level
 
       const updatedHabits = prevState.habits.map((habit) => {
         if (habit.id !== habitId) {
           return habit
         }
 
+        if (reachedTarget) {
+          return {
+            ...habit,
+            streak: habit.streak + 1,
+            lastCompleted: today,
+            lastProgressDate: today,
+            completedCount: 0,
+          }
+        }
+
         return {
           ...habit,
-          streak: habit.streak + 1,
-          lastCompleted: today,
+          lastProgressDate: today,
+          completedCount: nextCompletedCount,
         }
       })
-
-      const updatedPoints = prevState.points + 10
-      const updatedLevel =
-        updatedPoints >= prevState.level * 100
-          ? prevState.level + 1
-          : prevState.level
 
       return {
         ...prevState,
@@ -118,6 +218,9 @@ export function App() {
         return {
           ...habit,
           streak: 0,
+          completedCount: 0,
+          lastCompleted: null,
+          lastProgressDate: null,
         }
       })
 
@@ -147,6 +250,7 @@ export function App() {
 
   useEffect(() => {
     try {
+      const today = new Date().toISOString().slice(0, 10)
       const stored = localStorage.getItem(HABIT_DATA_KEY)
 
       if (!stored) {
@@ -162,8 +266,22 @@ export function App() {
       const data = parsed as Record<string, unknown>
 
       if (Array.isArray(data.habits)) {
-        const safeHabits = data.habits.filter(isHabit)
-        habitStore.setHabits(safeHabits)
+        const safeHabits = data.habits
+          .map((habit) => normalizeHabit(habit))
+          .filter((habit): habit is Habit => habit !== null)
+        const habitsWithDailyReset = safeHabits.map((habit) => {
+          if (habit.lastCompleted === today) {
+            return habit
+          }
+
+          return {
+            ...habit,
+            completedCount: 0,
+            lastProgressDate: null,
+          }
+        })
+
+        habitStore.setHabits(habitsWithDailyReset)
       }
 
       if (typeof data.points === "number" && Number.isFinite(data.points)) {
@@ -208,23 +326,65 @@ export function App() {
         </header>
 
         <section className="space-y-3">
-          <form className="flex flex-col gap-2" onSubmit={handleAddHabit}>
-            <Input
-              value={habitName}
-              onChange={(event) => setHabitName(event.target.value)}
-              placeholder="Habit name"
-            />
-            <Select
-              value={category}
-              onChange={(event) => setCategory(event.target.value as Category)}
-            >
-              <option value="health">health</option>
-              <option value="productivity">productivity</option>
-            </Select>
-            <Button type="submit" className="w-fit">
-              Add
-            </Button>
-          </form>
+          <Button
+            type="button"
+            className="w-fit"
+            onClick={() => setIsAddHabitOpen(true)}
+          >
+            Add Habit
+          </Button>
+
+          <Dialog open={isAddHabitOpen} onOpenChange={setIsAddHabitOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add habit</DialogTitle>
+                <DialogDescription>
+                  Save a new habit to track.
+                </DialogDescription>
+              </DialogHeader>
+
+              <form
+                className="flex flex-col gap-2"
+                onSubmit={handleAddHabitSubmit}
+              >
+                <Input
+                  value={habitName}
+                  onChange={(event) => setHabitName(event.target.value)}
+                  placeholder="Habit name"
+                />
+                <Select
+                  value={category}
+                  onChange={(event) =>
+                    setCategory(event.target.value as Category)
+                  }
+                >
+                  <option value="health">health</option>
+                  <option value="productivity">productivity</option>
+                </Select>
+                <Input
+                  type="number"
+                  min={1}
+                  value={targetCountInput}
+                  onChange={(event) => setTargetCountInput(event.target.value)}
+                  placeholder="Target count"
+                />
+                <Input
+                  value={unitInput}
+                  onChange={(event) => setUnitInput(event.target.value)}
+                  placeholder="times, minutes, pages"
+                />
+
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button type="button" variant="outline">
+                      Cancel
+                    </Button>
+                  </DialogClose>
+                  <Button type="submit">Save</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
 
           <div className="flex flex-col gap-3">
             <Select value={filter} onChange={handleFilterChange}>

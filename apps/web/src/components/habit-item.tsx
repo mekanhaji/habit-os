@@ -47,6 +47,10 @@ export function HabitItem({
 }: HabitItemProps) {
   const milestoneLabel = getMilestoneLabel(habit.streak)
   const completedToday = isCompletedToday(habit.lastCompleted)
+  const displayCompletedCount = completedToday
+    ? habit.targetCount
+    : Math.min(habit.completedCount, habit.targetCount)
+  const isTargetReached = displayCompletedCount >= habit.targetCount
 
   return (
     <li>
@@ -56,6 +60,9 @@ export function HabitItem({
         </CardHeader>
         <CardContent>
           <p>Category: {habit.category}</p>
+          <p>
+            {displayCompletedCount} / {habit.targetCount} {habit.unit}
+          </p>
           <p>🔥 {habit.streak} days</p>
           {completedToday ? (
             <p className="text-xs text-muted-foreground">Done today</p>
@@ -66,7 +73,7 @@ export function HabitItem({
           <Button
             type="button"
             size="xs"
-            disabled={completedToday}
+            disabled={isTargetReached}
             onClick={() => onComplete(habit.id)}
           >
             Complete
