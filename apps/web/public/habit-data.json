@@ -1,0 +1,67 @@
+{
+  "habits": [
+    {
+      "id": 1777236399550,
+      "name": "long live",
+      "category": "health",
+      "streak": 1,
+      "lastCompleted": "2026-04-26",
+      "lastProgressDate": "2026-04-26",
+      "targetCount": 1,
+      "completedCount": 0,
+      "unit": "times"
+    },
+    {
+      "id": 1777236399551,
+      "name": "Drink 2L Water",
+      "category": "health",
+      "streak": 5,
+      "lastCompleted": "2026-04-26",
+      "lastProgressDate": "2026-04-26",
+      "targetCount": 8,
+      "completedCount": 0,
+      "unit": "glasses"
+    },
+    {
+      "id": 1777236399552,
+      "name": "Read 20 Pages",
+      "category": "productivity",
+      "streak": 12,
+      "lastCompleted": "2026-04-25",
+      "lastProgressDate": "2026-04-25",
+      "targetCount": 1,
+      "completedCount": 0,
+      "unit": "session"
+    },
+    {
+      "id": 1777236399553,
+      "name": "Meditation",
+      "category": "health",
+      "streak": 0,
+      "lastCompleted": null,
+      "lastProgressDate": null,
+      "targetCount": 15,
+      "completedCount": 0,
+      "unit": "mins"
+    },
+    {
+      "id": 1777236399554,
+      "name": "Deep Work",
+      "category": "productivity",
+      "streak": 3,
+      "lastCompleted": "2026-04-26",
+      "lastProgressDate": "2026-04-26",
+      "targetCount": 4,
+      "completedCount": 0,
+      "unit": "hours"
+    }
+  ],
+  "points": 340,
+  "level": 4,
+  "userProfile": {
+    "name": "harsh",
+    "username": "harsh",
+    "email": "harsh@me.mail",
+    "avatar": "steady-flame"
+  }
+}
