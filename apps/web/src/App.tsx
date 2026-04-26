@@ -1,3 +1,4 @@
+import { type ReactNode } from "react"
 import {
   BrowserRouter,
   Navigate,
@@ -55,24 +56,14 @@ function InitialRouteRedirect() {
   return <Navigate to="/app" replace />
 }
 
-function ProtectedRoute() {
+function ProtectedRoute({ children }: { children: ReactNode }) {
   const profile = useUserProfileStore((state) => state.profile)
 
   if (!profile) {
     return <Navigate to="/profile" replace />
   }
 
-  return <Outlet />
-}
-
-function GuestRoute() {
-  const profile = useUserProfileStore((state) => state.profile)
-
-  if (profile) {
-    return <Navigate to="/app" replace />
-  }
-
-  return <Outlet />
+  return <>{children}</>
 }
 
 export function App() {
@@ -112,15 +103,16 @@ export function App() {
           <Routes>
             <Route path="/" element={<InitialRouteRedirect />} />
             <Route path="/welcome" element={<LandingPage />} />
-            
-            <Route element={<GuestRoute />}>
-              <Route path="/profile" element={<ProfilePage />} />
-            </Route>
-
-            <Route element={<ProtectedRoute />}>
-              <Route path="/app" element={<DashboardPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-            </Route>
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route
+              path="/app"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </div>
