@@ -1,13 +1,13 @@
 import { type ReactNode } from "react"
 import {
   BrowserRouter,
+  Link,
   Navigate,
   NavLink,
-  Outlet,
   Route,
   Routes,
 } from "react-router-dom"
-import { Flame, Heart, Leaf, Rocket, Star, User } from "lucide-react"
+import { Flame, Heart, Leaf, Rocket, Star, User, Settings } from "lucide-react"
 import { DashboardPage } from "./pages/dashboard-page"
 import { LandingPage } from "./pages/landing-page"
 import { ProfilePage } from "./pages/profile-page.tsx"
@@ -46,15 +46,6 @@ function AvatarIcon({ avatarId }: { avatarId: string }) {
   return <User className="size-3.5" aria-hidden="true" />
 }
 
-function InitialRouteRedirect() {
-  const profile = useUserProfileStore((state) => state.profile)
-
-  if (!profile) {
-    return <Navigate to="/profile" replace />
-  }
-
-  return <Navigate to="/app" replace />
-}
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const profile = useUserProfileStore((state) => state.profile)
@@ -72,37 +63,45 @@ export function App() {
   return (
     <BrowserRouter>
       <div className="min-h-svh p-6">
-        <div className="mx-auto flex w-full max-w-md flex-col gap-6 text-sm leading-relaxed">
-          <div className="space-y-3 border-b pb-3">
-            <nav className="flex items-center gap-2">
-              <NavLink to="/" end className={navLinkClassName}>
-                Home
-              </NavLink>
-              <NavLink to="/app" className={navLinkClassName}>
-                App
-              </NavLink>
-              <NavLink to="/profile" className={navLinkClassName}>
-                Profile
-              </NavLink>
-              <NavLink to="/settings" className={navLinkClassName}>
-                Settings
-              </NavLink>
-            </nav>
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 text-sm leading-relaxed">
+          <header className="flex items-center justify-between border-b pb-4 pt-2">
+            <Link to="/" className="text-xl font-extrabold tracking-tight text-foreground">
+              habit.os
+            </Link>
 
-            {profile ? (
-              <div className="inline-flex w-fit items-center gap-2 rounded-md border px-2 py-1 text-xs text-muted-foreground">
-                <AvatarIcon avatarId={profile.avatar} />
-                <span className="font-medium text-foreground">
-                  @{profile.username}
-                </span>
-                {profile.name ? <span>({profile.name})</span> : null}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                {profile ? (
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2 rounded-full border border-border/50 bg-card px-3 py-1.5 text-sm font-medium hover:bg-muted transition-colors shadow-sm"
+                  >
+                    <AvatarIcon avatarId={profile.avatar} />
+                    <span className="hidden sm:inline-block">@{profile.username}</span>
+                  </Link>
+                ) : (
+                  <Link
+                    to="/profile"
+                    className="hidden sm:inline-flex items-center justify-center rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    Create Profile
+                  </Link>
+                )}
+
+                <Link
+                  to="/settings"
+                  className="flex items-center gap-2 rounded-full p-2 sm:px-3 sm:py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  aria-label="Settings"
+                >
+                  <Settings className="size-5" />
+                  <span className="hidden sm:inline-block">Settings</span>
+                </Link>
               </div>
-            ) : null}
-          </div>
+            </div>
+          </header>
 
           <Routes>
-            <Route path="/" element={<InitialRouteRedirect />} />
-            <Route path="/welcome" element={<LandingPage />} />
+            <Route path="/" element={<LandingPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route
