@@ -2,11 +2,13 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Select } from "@workspace/ui/components/select"
+import { AiAssistant } from "./components/ai-assistant.tsx"
 import { HabitItem } from "./components/habit-item"
 import {
   habitStore,
   type Category,
   type Habit,
+  type HabitFilter,
   useHabitStore,
 } from "./store/habit-store"
 
@@ -30,6 +32,10 @@ function isHabit(value: unknown): value is Habit {
   )
 }
 
+function isHabitFilter(value: string): value is HabitFilter {
+  return value === "all" || value === "health" || value === "productivity"
+}
+
 export function App() {
   const habits = useHabitStore((state) => state.habits)
   const filter = useHabitStore((state) => state.filter)
@@ -38,6 +44,11 @@ export function App() {
   const hasHydratedRef = useRef(false)
   const [habitName, setHabitName] = useState("")
   const [category, setCategory] = useState<Category>("health")
+  const progressToNextLevel = points % 100
+  const progressWidth = `${progressToNextLevel}%`
+  const filteredHabits = habits.filter(
+    (habit) => filter === "all" || habit.category === filter
+  )
 
   function handleAddHabit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -97,6 +108,43 @@ export function App() {
     })
   }
 
+  function handleResetHabit(habitId: number) {
+    habitStore.update((prevState) => {
+      const updatedHabits = prevState.habits.map((habit) => {
+        if (habit.id !== habitId) {
+          return habit
+        }
+
+        return {
+          ...habit,
+          streak: 0,
+        }
+      })
+
+      return {
+        ...prevState,
+        habits: updatedHabits,
+      }
+    })
+  }
+
+  function handleDeleteHabit(habitId: number) {
+    habitStore.update((prevState) => ({
+      ...prevState,
+      habits: prevState.habits.filter((habit) => habit.id !== habitId),
+    }))
+  }
+
+  function handleFilterChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    const nextFilter = event.target.value
+
+    if (!isHabitFilter(nextFilter)) {
+      return
+    }
+
+    habitStore.setFilter(nextFilter)
+  }
+
   useEffect(() => {
     try {
       const stored = localStorage.getItem(HABIT_DATA_KEY)
@@ -151,16 +199,16 @@ export function App() {
     }
   }, [habits, points, level])
 
-  // Keep state reads lint-clean until UI wiring is added.
-  void [filter, points, level]
-
   return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>Add your first habit.</p>
-          <form className="mt-3 flex flex-col gap-2" onSubmit={handleAddHabit}>
+    <div className="min-h-svh p-6">
+      <div className="mx-auto flex w-full max-w-md flex-col gap-6 text-sm leading-relaxed">
+        <header className="space-y-1">
+          <h1 className="text-lg font-medium">Project ready!</h1>
+          <p className="text-muted-foreground">Add your first habit.</p>
+        </header>
+
+        <section className="space-y-3">
+          <form className="flex flex-col gap-2" onSubmit={handleAddHabit}>
             <Input
               value={habitName}
               onChange={(event) => setHabitName(event.target.value)}
@@ -178,17 +226,42 @@ export function App() {
             </Button>
           </form>
 
-          <ul className="mt-4">
-            {habits.map((habit) => (
-              <HabitItem
-                key={habit.id}
-                habit={habit}
-                onComplete={handleCompleteHabit}
-              />
-            ))}
-          </ul>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
+          <div className="flex flex-col gap-3">
+            <Select value={filter} onChange={handleFilterChange}>
+              <option value="all">all</option>
+              <option value="health">health</option>
+              <option value="productivity">productivity</option>
+            </Select>
+
+            <div className="space-y-1">
+              <p>Total points: {points}</p>
+              <p>Current level: {level}</p>
+              <p>Progress to next level: {progressToNextLevel}/100</p>
+              <div className="h-2 w-full overflow-hidden bg-muted">
+                <div
+                  className="h-full bg-foreground"
+                  style={{ width: progressWidth }}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <ul className="space-y-3">
+          {filteredHabits.map((habit) => (
+            <HabitItem
+              key={habit.id}
+              habit={habit}
+              onComplete={handleCompleteHabit}
+              onReset={handleResetHabit}
+              onDelete={handleDeleteHabit}
+            />
+          ))}
+        </ul>
+
+        <AiAssistant />
+
+        <div className="text-xs text-muted-foreground">
           (Press <kbd>d</kbd> to toggle dark mode)
         </div>
       </div>
