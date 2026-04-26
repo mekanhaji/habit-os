@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"
 import { Select } from "@workspace/ui/components/select"
+import { Card, CardContent } from "@workspace/ui/components/card"
 import {
   Dialog,
   DialogClose,
@@ -318,109 +319,173 @@ export function DashboardPage() {
   }, [habits, points, level])
 
   return (
-    <section className="space-y-6">
+    <div className="mx-auto max-w-5xl space-y-8 pb-12">
       <header className="space-y-1">
-        <h1 className="text-lg font-medium">Project ready!</h1>
-        <p className="text-muted-foreground">Add your first habit.</p>
+        <h1 className="text-2xl font-bold tracking-tight">Your Habits</h1>
+        <p className="text-muted-foreground">Track your daily progress and achieve your goals.</p>
       </header>
 
-      <section className="space-y-3">
+      {/* Stats Section */}
+      <Card>
+        <CardContent className="flex flex-col items-center justify-between gap-6 p-6 sm:flex-row">
+          <div className="flex w-full justify-around gap-8 sm:w-auto sm:justify-start">
+            <div className="space-y-1 text-center sm:text-left">
+              <p className="text-sm font-medium text-muted-foreground">Total Points</p>
+              <p className="text-3xl font-bold text-foreground">{points}</p>
+            </div>
+            <div className="space-y-1 text-center sm:text-left">
+              <p className="text-sm font-medium text-muted-foreground">Current Level</p>
+              <p className="text-3xl font-bold text-foreground">{level}</p>
+            </div>
+          </div>
+          <div className="w-full space-y-2 sm:max-w-md">
+            <div className="flex justify-between text-sm">
+              <span className="font-medium text-muted-foreground">Progress to Next Level</span>
+              <span className="font-medium">{progressToNextLevel} / 100</span>
+            </div>
+            <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full bg-foreground transition-all duration-500 ease-out"
+                style={{ width: progressWidth }}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Controls Section */}
+      <section className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <Button
           type="button"
-          className="w-fit"
+          size="lg"
           onClick={() => setIsAddHabitOpen(true)}
         >
-          Add Habit
+          Add New Habit
         </Button>
 
         <Dialog open={isAddHabitOpen} onOpenChange={setIsAddHabitOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add habit</DialogTitle>
-              <DialogDescription>Save a new habit to track.</DialogDescription>
+              <DialogTitle>Add New Habit</DialogTitle>
+              <DialogDescription>Create a new habit to track your progress.</DialogDescription>
             </DialogHeader>
 
             <form
-              className="flex flex-col gap-2"
+              className="flex flex-col gap-4 py-4"
               onSubmit={handleAddHabitSubmit}
             >
-              <Input
-                value={habitName}
-                onChange={(event) => setHabitName(event.target.value)}
-                placeholder="Habit name"
-              />
-              <Select
-                value={category}
-                onChange={(event) =>
-                  setCategory(event.target.value as Category)
-                }
-              >
-                <option value="health">health</option>
-                <option value="productivity">productivity</option>
-              </Select>
-              <Input
-                type="number"
-                min={1}
-                value={targetCountInput}
-                onChange={(event) => setTargetCountInput(event.target.value)}
-                placeholder="Target count"
-              />
-              <Input
-                value={unitInput}
-                onChange={(event) => setUnitInput(event.target.value)}
-                placeholder="times, minutes, pages"
-              />
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Habit Name</label>
+                <Input
+                  value={habitName}
+                  onChange={(event) => setHabitName(event.target.value)}
+                  placeholder="e.g., Read 10 pages, Drink water"
+                />
+              </div>
 
-              <DialogFooter>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Category</label>
+                <Select
+                  value={category}
+                  onChange={(event) =>
+                    setCategory(event.target.value as Category)
+                  }
+                >
+                  <option value="health">Health</option>
+                  <option value="productivity">Productivity</option>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Target Count</label>
+                  <Input
+                    type="number"
+                    min={1}
+                    value={targetCountInput}
+                    onChange={(event) => setTargetCountInput(event.target.value)}
+                    placeholder="1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Unit</label>
+                  <Input
+                    value={unitInput}
+                    onChange={(event) => setUnitInput(event.target.value)}
+                    placeholder="times, minutes, pages"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter className="mt-4 gap-2 sm:gap-0">
                 <DialogClose asChild>
                   <Button type="button" variant="outline">
                     Cancel
                   </Button>
                 </DialogClose>
-                <Button type="submit">Save</Button>
+                <Button type="submit">Save Habit</Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
 
-        <div className="flex flex-col gap-3">
-          <Select value={filter} onChange={handleFilterChange}>
-            <option value="all">all</option>
-            <option value="health">health</option>
-            <option value="productivity">productivity</option>
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <span className="whitespace-nowrap text-sm font-medium text-muted-foreground">Filter by:</span>
+          <Select value={filter} onChange={handleFilterChange} className="w-full sm:w-40">
+            <option value="all">All Categories</option>
+            <option value="health">Health</option>
+            <option value="productivity">Productivity</option>
           </Select>
-
-          <div className="space-y-1">
-            <p>Total points: {points}</p>
-            <p>Current level: {level}</p>
-            <p>Progress to next level: {progressToNextLevel}/100</p>
-            <div className="h-2 w-full overflow-hidden bg-muted">
-              <div
-                className="h-full bg-foreground"
-                style={{ width: progressWidth }}
-              />
-            </div>
-          </div>
         </div>
       </section>
 
-      <ul className="space-y-3">
-        {filteredHabits.map((habit) => (
-          <HabitItem
-            key={habit.id}
-            habit={habit}
-            onComplete={handleCompleteHabit}
-            onReset={handleResetHabit}
-            onDelete={handleDeleteHabit}
-          />
-        ))}
-      </ul>
+      {/* Habit List */}
+      {filteredHabits.length === 0 ? (
+        <Card className="flex flex-col items-center justify-center py-12 text-center">
+          <CardContent className="space-y-4">
+            <h3 className="text-xl font-semibold">No habits found</h3>
+            <p className="max-w-sm text-muted-foreground">
+              {filter === "all"
+                ? "You haven't added any habits yet. Start tracking your progress today!"
+                : `No habits found in the ${filter} category.`}
+            </p>
+            {filter === "all" && (
+              <Button onClick={() => setIsAddHabitOpen(true)} className="mt-4">
+                Create Your First Habit
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredHabits.map((habit) => (
+            <HabitItem
+              key={habit.id}
+              habit={habit}
+              onComplete={handleCompleteHabit}
+              onReset={handleResetHabit}
+              onDelete={handleDeleteHabit}
+            />
+          ))}
+        </ul>
+      )}
 
-      <AiAssistant />
+      {/* AI Assistant Section */}
+      <Card className="mt-12 border-dashed bg-muted/50">
+        <CardContent className="p-6">
+          <div className="mb-4">
+            <h3 className="flex items-center gap-2 text-lg font-semibold">
+              ✨ AI Assistant
+            </h3>
+            <p className="text-sm text-muted-foreground">Ask questions or get recommendations about your habits.</p>
+          </div>
+          <AiAssistant />
+        </CardContent>
+      </Card>
 
-      <div className="text-xs text-muted-foreground">
-        (Press <kbd>d</kbd> to toggle dark mode)
+      <div className="pt-4 text-center text-xs text-muted-foreground">
+        (Press <kbd className="rounded border bg-muted px-1 py-0.5">d</kbd> to toggle dark mode)
       </div>
-    </section>
+    </div>
   )
 }

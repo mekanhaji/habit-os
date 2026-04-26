@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
+import { Badge } from "@workspace/ui/components/badge"
 
 type HabitItemProps = {
   habit: Habit
@@ -54,33 +55,46 @@ export function HabitItem({
 
   return (
     <li>
-      <Card className="w-full">
-        <CardHeader className="mb-2">
-          <CardTitle>{habit.name}</CardTitle>
+      <Card className="w-full hover:shadow-md transition-shadow">
+        <CardHeader className="flex flex-row items-start justify-between pb-2 space-y-0">
+          <CardTitle className="text-base font-bold">{habit.name}</CardTitle>
+          <Badge variant={habit.category as any}>{habit.category}</Badge>
         </CardHeader>
-        <CardContent>
-          <p>Category: {habit.category}</p>
-          <p>
-            {displayCompletedCount} / {habit.targetCount} {habit.unit}
-          </p>
-          <p>🔥 {habit.streak} days</p>
-          {completedToday ? (
-            <p className="text-xs text-muted-foreground">Done today</p>
-          ) : null}
-          {milestoneLabel ? <p>Milestone: {milestoneLabel}</p> : null}
+        <CardContent className="pb-4">
+          <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+            <div className="flex items-center justify-between">
+              <span>
+                {displayCompletedCount} / {habit.targetCount} {habit.unit}
+              </span>
+              <span className="font-medium text-foreground">
+                🔥 {habit.streak} days
+              </span>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              {completedToday ? (
+                <span className="text-xs text-primary font-medium">
+                  ✨ Done today
+                </span>
+              ) : null}
+              {milestoneLabel ? (
+                <span className="text-xs">Milestone: {milestoneLabel}</span>
+              ) : null}
+            </div>
+          </div>
         </CardContent>
-        <CardFooter className="gap-2">
+        <CardFooter className="flex gap-2 pt-0">
           <Button
             type="button"
-            size="xs"
+            size="sm"
+            className="flex-1"
             disabled={isTargetReached}
             onClick={() => onComplete(habit.id)}
           >
-            Complete
+            {isTargetReached ? "Completed" : "Complete"}
           </Button>
           <Button
             type="button"
-            size="xs"
+            size="sm"
             variant="outline"
             onClick={() => onReset(habit.id)}
           >
@@ -88,7 +102,7 @@ export function HabitItem({
           </Button>
           <Button
             type="button"
-            size="xs"
+            size="sm"
             variant="destructive"
             onClick={() => onDelete(habit.id)}
           >
