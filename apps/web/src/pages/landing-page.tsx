@@ -1,7 +1,7 @@
-import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@workspace/ui/components/button"
-import { CheckCircle2, Zap, Target, BookOpen, Droplets, Dumbbell } from "lucide-react"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@workspace/ui/components/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card"
+import { BookOpen, CheckCircle2, Droplets, Dumbbell, Target, Zap } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 export function LandingPage() {
   const navigate = useNavigate()

@@ -1,26 +1,18 @@
+import { Flame, Heart, Leaf, Rocket, Settings, Star, User } from "lucide-react"
 import { type ReactNode } from "react"
 import {
   BrowserRouter,
   Link,
   Navigate,
-  NavLink,
   Route,
-  Routes,
+  Routes
 } from "react-router-dom"
-import { Flame, Heart, Leaf, Rocket, Star, User, Settings } from "lucide-react"
 import { DashboardPage } from "./pages/dashboard-page"
 import { LandingPage } from "./pages/landing-page"
 import { ProfilePage } from "./pages/profile-page.tsx"
 import { SettingsPage } from "./pages/settings-page"
 import { useUserProfileStore } from "./store/user-profile-store"
 
-const navLinkClassName = ({ isActive }: { isActive: boolean }) =>
-  [
-    "rounded-md px-3 py-1 transition-colors",
-    isActive
-      ? "bg-foreground text-background"
-      : "text-muted-foreground hover:bg-muted hover:text-foreground",
-  ].join(" ")
 
 function AvatarIcon({ avatarId }: { avatarId: string }) {
   if (avatarId === "trailblazer") {
